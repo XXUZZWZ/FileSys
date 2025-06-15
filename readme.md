@@ -1,131 +1,123 @@
-### 简化版在线文档管理系统Prompt
+# 轻量级文档管理系统
 
-**项目名称**：轻量级JSP文档管理系统  
-**核心需求**：  
-```markdown
-1. 用户管理（基础版）
-   - 注册：仅需用户名+密码
-   - 登录：Session简单验证
-   - 权限：区分普通用户和管理员（固定admin账号）
+## 项目介绍
 
-2. 文档管理（核心功能）
-   - 管理员可上传.txt/.pdf文档（限制2MB）
-   - 显示文档列表（标题+上传时间）
-   - 支持文档下载
+轻量级文档管理系统是一个基于Java Web技术开发的简易文档管理平台，主要用于文档的上传、下载和管理。系统还集成了用户管理和论坛功能，为用户提供了一个完整的文档共享与交流环境。
 
-3. 界面要求
-   - 单页面设计（index.jsp）
-   - 基础HTML表单（无CSS框架）
-```
+## 主要功能
 
-### 极简数据库设计
-```sql
-/* 用户表 */
-CREATE TABLE users (
-  id INT AUTO_INCREMENT PRIMARY KEY,
-  username VARCHAR(20) UNIQUE,
-  password VARCHAR(20) /* 明文存储简化 */
-);
+### 用户管理
+- **用户注册**：新用户可以通过注册页面创建账号
+- **用户登录**：已有账号的用户可以登录系统
+- **权限控制**：区分普通用户和管理员权限
 
-/* 文档表 */
-CREATE TABLE documents (
-  id INT AUTO_INCREMENT PRIMARY KEY,
-  title VARCHAR(100),
-  filename VARCHAR(50), /* 存储文件名 */
-  upload_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-```
+### 文档管理
+- **文档上传**：管理员可以上传.txt/.pdf文档（限制2MB）
+- **文档列表**：显示所有上传的文档，包括标题和上传时间
+- **文档下载**：用户可以下载系统中的文档
 
-### 技术栈精简
-```markdown
-- 前端：纯HTML表单
-- 后端：JSP + Servlet
-- 存储：服务器文件系统
-- 安全：基础Session验证
-```
+### 论坛功能
+- **发布主题**：登录用户可以发布新的讨论主题
+- **回复功能**：用户可以回复已有主题
+- **浏览统计**：记录主题的浏览次数
 
-### 核心代码文件（共5个）
-```
-1. index.jsp          # 主界面（登录/文档列表）
-2. register.jsp       # 注册页面
-3. UploadServlet.java # 文件上传处理
-4. LoginServlet.java  # 登录验证
-5. download.jsp       # 文档下载
-```
+## 技术栈
 
-### 生成要求
-```markdown
-1. 用户系统：
-   - 注册：直接INSERT用户数据
-   - 登录：固定admin账号(admin/123456)
-   
-2. 文档功能：
-   - 上传：<input type="file">表单
-   - 存储：文件保存到/webapp/uploads/
-   - 列表：SELECT * FROM documents
+- **前端**：HTML, Bootstrap 5
+- **后端**：Java, JSP, Servlet
+- **数据库**：MySQL
+- **服务器**：Apache Tomcat 9.0
+- **开发工具**：Eclipse
 
-3. 权限控制：
-   - 上传按钮仅admin可见
-   - 普通用户只能查看/下载
+## 系统架构
 
-4. 代码限制：
-   - 每个JSP文件≤50行
-   - 每个Servlet≤30行
-   - 无JavaScript/CSS框架
-```
+系统采用经典的MVC架构：
+- **Model**：Java Bean对象（Document, Topic, Reply等）
+- **View**：JSP页面
+- **Controller**：Servlet处理请求
 
-### 示例代码片段
-**文件上传表单(index.jsp)**
-```jsp
-<% if(session.getAttribute("user").equals("admin")) { %>
-  <form action="UploadServlet" method="post" enctype="multipart/form-data">
-    标题：<input type="text" name="title"><br>
-    文件：<input type="file" name="file"><br>
-    <input type="submit" value="上传">
-  </form>
-<% } %>
-```
+## 数据库设计
 
-**文档列表(index.jsp)**
-```jsp
-<table border="1">
-  <tr><th>标题</th><th>上传时间</th></tr>
-  <% for(Document doc : documentList) { %>
-    <tr>
-      <td><a href="download.jsp?id=<%=doc.getId()%>"><%=doc.getTitle()%></a></td>
-      <td><%=doc.getUploadTime()%></td>
-    </tr>
-  <% } %>
-</table>
-```
+系统包含以下数据表：
+1. **users**：存储用户信息
+   - id (主键)
+   - username (用户名)
+   - password (密码)
 
-**文件下载(download.jsp)**
-```jsp
-<%
-String id = request.getParameter("id");
-Document doc = DocumentDAO.getById(id);
-response.setHeader("Content-Disposition", "attachment; filename="+doc.getFilename());
-Files.copy(Paths.get(uploadPath + doc.getFilename()), response.getOutputStream());
-%>
-```
+2. **documents**：存储文档信息
+   - id (主键)
+   - title (标题)
+   - filename (文件名)
+   - upload_time (上传时间)
 
-### 特别说明
-```markdown
-1. 放弃的功能：
-   - 用户信息修改
-   - 文档编辑/删除
-   - 分页/搜索
-   - 论坛模块
-   
-2. 安全简化：
-   - 密码明文存储
-   - 无文件类型检查
-   - 无XSS防护
+3. **topics**：存储论坛主题
+   - id (主键)
+   - title (标题)
+   - content (内容)
+   - username (发布者)
+   - create_time (创建时间)
+   - view_count (浏览次数)
 
-3. 部署要求：
-   - 创建/webapp/uploads/目录
-   - 初始化数据库：
-     INSERT INTO users VALUES(1,'admin','123456');
-```
+4. **replies**：存储论坛回复
+   - id (主键)
+   - topic_id (关联主题ID)
+   - content (回复内容)
+   - username (回复者)
+   - create_time (回复时间)
 
-"# FileSys" 
+## 安装与部署
+
+### 环境要求
+- JDK 8+
+- Apache Tomcat 9.0+
+- MySQL 5.7+
+- Eclipse IDE
+
+### 部署步骤
+1. 克隆或下载项目到本地
+2. 在Eclipse中导入项目
+3. 配置Tomcat服务器
+4. 创建MySQL数据库，执行`src/main/webapp/WEB-INF/db_init.sql`初始化数据库
+5. 修改数据库连接参数（位于各Servlet和DAO类中）
+6. 部署项目到Tomcat并启动
+
+## 使用说明
+
+### 管理员账号
+- 用户名：admin
+- 密码：123456
+
+### 基本操作流程
+1. 访问首页，使用管理员账号登录
+2. 上传文档：在首页点击"上传"按钮
+3. 下载文档：在文档列表中点击文档标题
+4. 访问论坛：点击导航栏中的"论坛"链接
+5. 发布主题：在论坛页面填写标题和内容
+6. 回复主题：在主题详情页面底部填写回复内容
+
+## 项目特点
+
+- **轻量级**：系统设计简洁，易于部署和使用
+- **功能完整**：包含文档管理和论坛交流两大核心功能
+- **界面友好**：采用Bootstrap框架，界面美观且响应式
+- **安全性**：实现了基本的用户认证和权限控制
+
+## 未来改进方向
+
+- 增强文件类型验证和安全性检查
+- 实现更安全的密码存储机制（如加盐哈希）
+- 添加文档搜索和分类功能
+- 优化论坛功能，添加点赞、置顶等特性
+- 实现更细粒度的权限控制系统
+
+## 许可证
+
+本项目采用MIT许可证。详情请参阅LICENSE文件。
+
+## 联系方式
+
+如有问题或建议，请联系项目维护者。
+
+---
+
+© 2025 轻量级文档管理系统 版权所有
